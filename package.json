@@ -1,0 +1,16 @@
+{
+  "name": "videoplatform",
+  "version": "1.0.0",
+  "description": "a video platform",
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "license": "ISC",
+  "author": "Aman kumar",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
