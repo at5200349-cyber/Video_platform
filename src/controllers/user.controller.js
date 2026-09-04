@@ -4,6 +4,7 @@ import { uploadOnCLOUDINARY } from "../utils/cloudinary.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -366,6 +367,56 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, channel[0], "Channel profile fetched successfully"));
 });
 
+const getWatchHistory=asyncHandler(async(req,res)=>{
+  const user=await User.aggregate([
+    {
+    $match:{
+      _id:mongoose.Types.ObjectId(req.user._id)
+    }
+  },
+  {
+    $lookup:{
+      form:"videos",
+      localField:"WatchHistory",
+      foreignField:"_id",
+      as:"watchHistory",
+      pipeline:[
+        {
+          $lookup:{
+            from:"users",
+            localField:"owner",
+            foreignField:"_id",
+            as:"owner",
+            pipeline:[{
+              $project:{
+                fullName:1,
+                username:1,
+                avatar:1
+              }
+            }]
+          }
+        },{
+          $addFields:{
+            owner:{
+              $first:"$owner"
+            }
+          }
+        }
+      ]
+    }
+  }
+  ])
+
+
+  if(!user){
+    return new ApiError(401,"user not exist");
+  }
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200,user[0].watchHistory,"Watch history fetched successfully"))
+})
+
 export { loginUsers };
 export { registerUser };
 export { logoutUser };
@@ -375,3 +426,5 @@ export { updateAccountDetails };
 export { updateUserAvatar };
 export { updateUserCoverImage };
 export { getCurrentUser };
+export { getUserChannelProfile };
+export {getWatchHistory}
