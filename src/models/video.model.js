@@ -4,7 +4,7 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 
 
-const videsSchema=new Schema(
+const videoSchema=new Schema(
     {
         videoFile:{
             type:String ,//Clooudinary url
@@ -45,4 +45,6 @@ const videsSchema=new Schema(
     }
 )
 
-export const Video=mongoose.model("Video",videsSchema)
+videoSchema.plugin(mongooseAggregatePaginate)
+
+export const Video=mongoose.model("Video",videoSchema)
