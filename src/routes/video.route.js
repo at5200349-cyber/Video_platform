@@ -13,16 +13,18 @@ const router = Router();
 router
 .route("/")
 .get(getAllVideos)
-.post(upload.fields([{name:"video",maxCount:1},{name:"thumbnail",maxCount:1}]),uploadVideo);
+.post(verifyJWT,upload.fields([{name:"video",maxCount:1},{name:"thumbnail",maxCount:1}]),uploadVideo);
+
+
+
+router
+.route("/:videoId")
+.get(getVideoById)
+;
 
 
 
 
-
-
-
-
-router.use(verifyJWT);
 
 
 

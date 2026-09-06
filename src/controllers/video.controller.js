@@ -44,50 +44,70 @@ const getAllVideos = asyncHandler(async (req, res) => {
     throw new ApiError(404, "No videos found");
   }
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, "Videos fetched successfully", {
-        videos,
-        totalVideos,
-        page: pageNumber,
-        limit: limitNumber,
-      })
-    );
+  return res.status(200).json(
+    new ApiResponse(200, "Videos fetched successfully", {
+      videos,
+      totalVideos,
+      page: pageNumber,
+      limit: limitNumber,
+    })
+  );
 });
 
+
+
+
+
+
 const uploadVideo = asyncHandler(async (req, res) => {
-    const { title, description, duration } = req.body;
+  const { title, description, duration } = req.body;
 
-    const videoFile = req.files.video[0].path;
-    const thumbnailFile = req.files.thumbnail[0].path;
-    if(!videoFile || !thumbnailFile){
-        throw new ApiError(400,"Video and thumbnail files are required")
-    }
+  const videoFile = req.files.video[0].path;
+  const thumbnailFile = req.files.thumbnail[0].path;
+  if (!videoFile || !thumbnailFile) {
+    throw new ApiError(400, "Video and thumbnail files are required");
+  }
 
-    const videoUploadResult=await uploadOnCLOUDINARY(videoFile);
-     if(!videoUploadResult){
-        throw new ApiError(500,"Failed to upload video to Cloudinary")
-    }
-    const thumbnailUploadResult=await uploadOnCLOUDINARY(thumbnailFile);
-    if(!thumbnailUploadResult){
-        throw new ApiError(500,"Failed to upload thumbnail to Cloudinary")
-    }
+  const videoUploadResult = await uploadOnCLOUDINARY(videoFile);
+  if (!videoUploadResult) {
+    throw new ApiError(500, "Failed to upload video to Cloudinary");
+  }
+  const thumbnailUploadResult = await uploadOnCLOUDINARY(thumbnailFile);
+  if (!thumbnailUploadResult) {
+    throw new ApiError(500, "Failed to upload thumbnail to Cloudinary");
+  }
 
-    const newVideo = await Video.create({
-        videoFile: videoUploadResult.url,
-        thumbnail: thumbnailUploadResult.url,
-        title,
-        description,
-        duration,
-        owner: req.user._id,
-    });
+  const newVideo = await Video.create({
+    videoFile: videoUploadResult.url,
+    thumbnail: thumbnailUploadResult.url,
+    title,
+    description,
+    duration,
+    owner: req.user._id,
+  });
 
-    return res
-        .status(201)
-        .json(new ApiResponse(201, newVideo, "Video uploaded successfully"));
+  return res
+    .status(201)
+    .json(new ApiResponse(201, newVideo, "Video uploaded successfully"));
+});
 
-}
-);
 
-export { getAllVideos, uploadVideo };
+
+
+const getVideoById = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const videos = await Video.find({ owner: videoId });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, videos, "videos fetch succefully"));
+});
+
+
+
+const updateVideo = asyncHandler(async (req, res) => {
+
+    
+});
+
+export { getAllVideos, uploadVideo, getVideoById, updateVideo };
