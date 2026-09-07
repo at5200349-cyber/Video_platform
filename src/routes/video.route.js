@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware";
 import { getAllVideos } from "../controllers/video.controller.js";
-import { uploadVideo } from "../controllers/video.controller.js";
+import { uploadVideo ,updateVideo,getVideoById} from "../controllers/video.controller.js";
 import {upload} from "../middlewares/multer.middleware.js";
 
 
@@ -19,8 +19,9 @@ router
 
 router
 .route("/:videoId")
-.get(getVideoById)
-;
+.get(getVideoById);
+router.route("/:videoId").patch(verifyJWT,upload.single("thumbnail"),updateVideo);
+
 
 
 

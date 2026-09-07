@@ -5,7 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCLOUDINARY } from "../utils/cloudinary.js";
+import { uploadOnCLOUDINARY ,deleteOnCLOUDINARY} from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -106,8 +106,44 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 
 const updateVideo = asyncHandler(async (req, res) => {
+    const {videoId}=req.params;
+    const {title,description}=req.body;
+    
+
+  const video=await Video.findById(videoId);
+  if(!video){
+    throw new ApiError(404,"Video not found");
+  }
+    const ownerid=video.owner.toString();
+    if(ownerid!= req.user._id.toString()){
+      throw new ApiError(403,"You are not autorized for this");
+    }
+    
+    if(title!==undefined){
+      video.title=title
+    }
+    if(description!==undefined){
+      video.description=description;
+    }
+
+    if(req.file){
+    const  thumbnail=await uploadOnCLOUDINARY(req.file.path);
+      if(!thumbnail){
+        throw new ApiError(500,"Failed to upload thumbnail");
+      }
+
+      await deleteOnCLOUDINARY(video.thumbnail);
+      video.thumbnail=thumbnail.url;
+
+    }
+
+    const updatedVide=await video.save();
+
+
+    return res.status(200).json(new ApiResponse(200,updatedVide,"update successful"));
+
 
     
 });
 
-export { getAllVideos, uploadVideo, getVideoById, updateVideo };
+export { getAllVideos, uploadVideo, getVideoById, updateVideo, };
