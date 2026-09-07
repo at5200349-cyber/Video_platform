@@ -55,16 +55,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
 });
 
 
-
-
-
-
 const uploadVideo = asyncHandler(async (req, res) => {
   const { title, description, duration } = req.body;
 
   const videoFile = req.files.video[0].path;
-  const thumbnailFile = req.files.thumbnail[0].path;
-  if (!videoFile || !thumbnailFile) {
+  const thumbnail = req.files.thumbnail[0].path;
+  if (!videoFile || !thumbnail) {
     throw new ApiError(400, "Video and thumbnail files are required");
   }
 
@@ -78,8 +74,15 @@ const uploadVideo = asyncHandler(async (req, res) => {
   }
 
   const newVideo = await Video.create({
-    videoFile: videoUploadResult.url,
-    thumbnail: thumbnailUploadResult.url,
+         videoFile: {
+            url: videoUploadResult.url,
+            publicId: videoUploadResult.public_id
+        },
+
+        thumbnail: {
+            url: thumbnailUploadResult.url,
+            publicId: thumbnailUploadResult.public_id
+        },
     title,
     description,
     duration,
@@ -146,4 +149,53 @@ const updateVideo = asyncHandler(async (req, res) => {
     
 });
 
-export { getAllVideos, uploadVideo, getVideoById, updateVideo, };
+const deleteVideo=asyncHandler(async(req,res)=>{
+      const {videoId}=req.params;
+      const video=await Video.findById(videoId);
+      if(!video){
+        throw new ApiError(404,"video not found");
+      }
+
+
+      //Ownership Check
+
+      const  owner=video.owner.toString();
+      if(owner!==req.user._id.toString()){
+        throw new ApiError(401,"You are not authorized to delete the video");
+      };
+      const deletedVideo=await deleteOnCLOUDINARY(video.videoFile.publicId,"video");
+      if(!deletedVideo){
+        throw new ApiError(500,"Failed to delete video from Cloudinary");
+
+      }
+      const deleteThubmnail=await deleteOnCLOUDINARY(video.thumbnail.publicId,"image");
+      if(!deleteThubmnail){
+                throw new ApiError(500,"Failed to delete video from Cloudinary");
+      }
+
+
+      await Video.findByIdAndDelete(videoId);
+      return res.status(200).json(new ApiResponse(200,{},"Video delted ssuccessfully"));
+
+})
+
+const togglePublidhStatus=asyncHandler(async(req,res)=>{
+  const{videoId}=req.params;
+  const video=await Video.findById(videoId);
+  if(!video){
+    throw new ApiError(404,"video not found");
+  }
+  const owner=video.owner.toString();
+  if(owner!==req.user._id.toString()){
+    throw new ApiError (401,"You are not autorized for toggle");
+  }
+ 
+
+  video.isPublished=!video.isPublished;
+
+await video.save();
+return res.status(200).json(new ApiResponse(200,{},"status change successful"));
+
+})
+
+export { getAllVideos, uploadVideo, getVideoById, updateVideo,deleteVideo,togglePublidhStatus };
