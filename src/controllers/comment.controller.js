@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { Comment } from "../models/comment.model";
+import { Video } from "../models/video.model";
 
 const getAllComment = asyncHandler(async (req, res) => {
   const { VideoId } = req.params;
@@ -49,6 +50,10 @@ const addComment=asyncHandler(async(req,res)=>{
     const {comment}=req.body;
     if(!comment?.trim()){
         throw new ApiError(400,"Comment is required");
+    }
+    const checkvideo=await Video.findById(VideoId);
+    if(!checkvideo){
+         throw new ApiError(404, "Video not found");
     }
     const newComment=await Comment.create({
         comment:comment.trim(),
