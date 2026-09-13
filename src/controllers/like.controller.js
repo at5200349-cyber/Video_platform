@@ -24,7 +24,7 @@ const togglevideolike=asyncHandler(async(req,res)=>{
     })
     if(existlike){
         await Like.findByIdAndDelete(existlike._id);
-        return res.status(201).json(new ApiResponse(201,{},"Dislike successfully"))
+        return res.status(200).json(new ApiResponse(201,{},"Dislike successfully"))
     }
 
    const createuser=await Like.create({
@@ -32,7 +32,7 @@ const togglevideolike=asyncHandler(async(req,res)=>{
         likeby:likeby
     })
     if(!createuser){
-        throw new ApiError("500","Internal Server error");
+        throw new ApiError(500,"Internal Server error");
     }
 
 
@@ -86,7 +86,7 @@ const toggletweet= asyncHandler(async(req,res)=>{
     });
     if(existtweet){
         await Like.findByIdAndDelete(existtweet?._id);
-        throw new ApiResponse(201,{},"Like remved succefully");
+         return res.status(200).json( new ApiResponse(201,{},"Like remved succefully"));
     }
     const tweetcreate=await Like.create({
         tweet:tweetId,
