@@ -16,7 +16,12 @@ const subcriptionSchema= new Schema({
 },{
     timestamps:true
 })
-
+subcriptionSchema.index({
+    subscriber:1,
+    channel:1
+},{
+    unique:true
+})
 
 
 export const Subcription = mongoose.model("Subcription",subcriptionSchema)
