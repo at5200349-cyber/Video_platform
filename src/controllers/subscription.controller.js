@@ -57,6 +57,10 @@ const getUserChannelSubcribers=asyncHandler(async(req,res)=>{
 })
 
 const getSubscribedChannels=asyncHandler(async(req,res)=>{
-
+    const {subscriberId}=req.params
+     const subcribed=await Subcription.find({subscriber:subscriberId}).populate("channel","username fullname avatar");
+ 
+     return res.status(200)
+     .json(new ApiResponse(200,subcribed,"Subscribed channels fetched successfully"));
 })
 export{toggleSubcription,getUserChannelSubcribers,getSubscribedChannels};
