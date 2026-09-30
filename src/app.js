@@ -25,6 +25,7 @@ app.use(cookieParser())
 import userRouter from "./routes/user.route.js"
 import videoRouter from "./routes/video.route.js"
 import playlistRouter from "./routes/playlist.route.js"
+// import playlistRouter from "./routes/playlist.route.js"
 import tweetRouter from "./routes/tweet.route.js"
 import commentRouter from "./routes/comment.route.js"
 import subcriptionRouter from "./routes/subcription.route.js"
