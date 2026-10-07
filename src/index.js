@@ -2,11 +2,16 @@ import dotenv from "dotenv"
 import connetDB from "./db/index.js";
 import app from "./app.js"
 dotenv.config({path:'./.env'})
+import redis from "./db/redis.js";
 
+
+dotenv.config();
+
+const PORT=process.env.PORT||8000;
 connetDB()
 .then(()=>{
-    app.listen(process.env.PORT||8000,()=>{
-        console.log(`Server is runninng at port : ${process.env.PORT}`);
+    app.listen(PORT,()=>{
+        console.log(`Server is runninng at port : ${PORT}`);
     })
 })
 .catch((e)=>{
