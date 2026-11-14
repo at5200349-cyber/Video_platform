@@ -1,6 +1,6 @@
 import mongoose, { isValidObjectId, Schema } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
+import redis from "../db/redis.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -18,6 +18,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
   const pageNumber = parseInt(page);
   const limitNumber = parseInt(limit);
+
+  const cacheKey = `videos:${pageNumber}:${limitNumber}:${search}:${sortBy}:${sortOrder}`;
+  const cacheVideos=await redis.get(cacheKey);
+  if(cacheVideos){
+    return res.status(200).json(new ApiResponse(200,"videos fetched from redis cache",JSON.parse(cacheVideos)));
+  }
 
   const skip = (pageNumber - 1) * limitNumber;
 
@@ -68,7 +74,7 @@ const uploadVideo = asyncHandler(async (req, res) => {
   if (!videoUploadResult) {
     throw new ApiError(500, "Failed to upload video to Cloudinary");
   }
-  const thumbnailUploadResult = await uploadOnCLOUDINARY(thumbnailFile);
+  const thumbnailUploadResult = await uploadOnCLOUDINARY(thumbnail);
   if (!thumbnailUploadResult) {
     throw new ApiError(500, "Failed to upload thumbnail to Cloudinary");
   }
@@ -99,11 +105,24 @@ const uploadVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const videos = await Video.find({ owner: videoId });
 
+const cachekey=`video:${videoId}`;
+
+const cachevideo= await redis.get(cachekey);
+if(cachevideo){
+  return res.status(200).json(new ApiResponse(200,JSON.parse(cachevideo),"video fetched from cache"));
+}
+
+
+  const videos = await Video.findById(videoId);
+  if(!videos){
+    throw new ApiError(404,"video not found");
+
+  }
+  await redis.set(cachekey,JSON.stringify(videos),"EX",300);
   return res
-    .status(201)
-    .json(new ApiResponse(201, videos, "videos fetch succefully"));
+    .status(200)
+    .json(new ApiResponse(200, videos, "Video fetched successfully"));
 });
 
 
@@ -112,13 +131,14 @@ const updateVideo = asyncHandler(async (req, res) => {
     const {videoId}=req.params;
     const {title,description}=req.body;
     
-
+    const cachekey=`video:${videoId}`;
+    
   const video=await Video.findById(videoId);
   if(!video){
     throw new ApiError(404,"Video not found");
   }
     const ownerid=video.owner.toString();
-    if(ownerid!= req.user._id.toString()){
+    if(ownerid!== req.user._id.toString()){
       throw new ApiError(403,"You are not autorized for this");
     }
     
@@ -141,7 +161,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     }
 
     const updatedVide=await video.save();
-
+    await redis.del(cachekey);
 
     return res.status(200).json(new ApiResponse(200,updatedVide,"update successful"));
 
@@ -156,6 +176,7 @@ const deleteVideo=asyncHandler(async(req,res)=>{
         throw new ApiError(404,"video not found");
       }
 
+      const cachekey=`video:${videoId}`;
 
       //Ownership Check
 
@@ -175,6 +196,7 @@ const deleteVideo=asyncHandler(async(req,res)=>{
 
 
       await Video.findByIdAndDelete(videoId);
+      await redis.del(cachekey);
       return res.status(200).json(new ApiResponse(200,{},"Video delted ssuccessfully"));
 
 })
@@ -194,6 +216,8 @@ const togglePublidhStatus=asyncHandler(async(req,res)=>{
   video.isPublished=!video.isPublished;
 
 await video.save();
+const cachekey=`video:${videoId}`;
+await redis.del(cachekey);
 return res.status(200).json(new ApiResponse(200,{},"status change successful"));
 
 })
